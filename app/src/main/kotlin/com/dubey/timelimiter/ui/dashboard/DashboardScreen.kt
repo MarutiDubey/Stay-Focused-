@@ -97,11 +97,14 @@ fun AppUsageCard(app: MonitoredApp, pm: PackageManager, onClick: () -> Unit) {
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // App icon
-            val iconBitmap = try {
-                pm.getApplicationIcon(app.packageName).toBitmap(64, 64).asImageBitmap()
-            } catch (e: Exception) {
-                null
+            // App icon — resolve outside the composable invocation so the
+            // try/catch doesn't wrap any @Composable call.
+            val iconBitmap = remember(app.packageName) {
+                try {
+                    pm.getApplicationIcon(app.packageName).toBitmap(64, 64).asImageBitmap()
+                } catch (e: Exception) {
+                    null
+                }
             }
 
             if (iconBitmap != null) {

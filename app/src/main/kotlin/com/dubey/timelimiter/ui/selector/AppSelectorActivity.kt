@@ -196,10 +196,12 @@ fun AppSelectItem(app: AppInfo, isSelected: Boolean, onToggle: () -> Unit) {
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val iconBitmap = try {
-                pm.getApplicationIcon(app.packageName).toBitmap(48, 48).asImageBitmap()
-            } catch (e: Exception) {
-                null
+            val iconBitmap = remember(app.packageName) {
+                try {
+                    pm.getApplicationIcon(app.packageName).toBitmap(48, 48).asImageBitmap()
+                } catch (e: Exception) {
+                    null
+                }
             }
 
             if (iconBitmap != null) {
