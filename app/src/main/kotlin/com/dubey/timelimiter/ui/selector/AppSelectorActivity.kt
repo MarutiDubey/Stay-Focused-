@@ -172,6 +172,7 @@ fun AppSelectorScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppSelectItem(app: AppInfo, isSelected: Boolean, onToggle: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -195,14 +196,19 @@ fun AppSelectItem(app: AppInfo, isSelected: Boolean, onToggle: () -> Unit) {
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            try {
-                val icon = pm.getApplicationIcon(app.packageName)
+            val iconBitmap = try {
+                pm.getApplicationIcon(app.packageName).toBitmap(48, 48).asImageBitmap()
+            } catch (e: Exception) {
+                null
+            }
+
+            if (iconBitmap != null) {
                 Image(
-                    bitmap = icon.toBitmap(48, 48).asImageBitmap(),
+                    bitmap = iconBitmap,
                     contentDescription = null,
                     modifier = Modifier.size(40.dp)
                 )
-            } catch (e: Exception) {
+            } else {
                 Box(modifier = Modifier.size(40.dp))
             }
 

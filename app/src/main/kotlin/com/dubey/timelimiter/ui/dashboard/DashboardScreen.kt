@@ -98,14 +98,19 @@ fun AppUsageCard(app: MonitoredApp, pm: PackageManager, onClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             // App icon
-            try {
-                val icon = pm.getApplicationIcon(app.packageName)
+            val iconBitmap = try {
+                pm.getApplicationIcon(app.packageName).toBitmap(64, 64).asImageBitmap()
+            } catch (e: Exception) {
+                null
+            }
+
+            if (iconBitmap != null) {
                 Image(
-                    bitmap = icon.toBitmap(64, 64).asImageBitmap(),
+                    bitmap = iconBitmap,
                     contentDescription = null,
                     modifier = Modifier.size(48.dp)
                 )
-            } catch (e: Exception) {
+            } else {
                 Box(modifier = Modifier.size(48.dp))
             }
 
