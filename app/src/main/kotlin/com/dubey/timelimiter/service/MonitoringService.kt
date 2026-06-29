@@ -23,8 +23,10 @@ class MonitoringService : Service() {
     // Key: packageName, Value: totalForegroundTime already counted (ms)
     private val countedForegroundMs = mutableMapOf<String, Long>()
 
-    // Packages currently blocked — don't keep re-triggering the overlay
-    private val blockedPackages = mutableSetOf<String>()
+    // When we last threw up the overlay for a package (ms). Used to throttle
+    // re-launches so the overlay doesn't flicker every poll, while still
+    // re-blocking if the user reopens an over-limit app after the cooldown.
+    private val lastBlockedAt = mutableMapOf<String, Long>()
 
     override fun onCreate() {
         super.onCreate()
@@ -42,7 +44,7 @@ class MonitoringService : Service() {
                 serviceScope.launch {
                     database.monitoredAppDao().resetAllUsage()
                     countedForegroundMs.clear()
-                    blockedPackages.clear()
+                    lastBlockedAt.clear()
                     // Re-schedule for next midnight
                     scheduleMidnightReset()
                 }
@@ -113,22 +115,42 @@ class MonitoringService : Service() {
                 val newMinutes = (newMs / 60_000).toInt()
                 if (newMinutes > 0) {
                     database.monitoredAppDao().incrementUsage(pkg, newMinutes)
+                    // Only advance the counter by the whole minutes we credited,
+                    // so the leftover seconds carry over and aren't discarded.
                     countedForegroundMs[pkg] = alreadyCounted + (newMinutes * 60_000L)
                 }
+                // If we haven't credited a full minute yet, leave countedForegroundMs
+                // unchanged so the partial seconds accumulate toward the next minute.
             }
 
-            // Check if limit reached — but only trigger if currently active app
-            if (pkg == currentPkg && pkg !in blockedPackages) {
+            // Check if limit reached. Re-block whenever the over-limit app is in
+            // the foreground — if the user dismisses the overlay and reopens the
+            // app while still over the limit, it must block again. A short
+            // cooldown prevents the overlay from re-launching on every poll.
+            if (pkg == currentPkg) {
                 val updatedApp = database.monitoredAppDao().getApp(pkg)
                 if (updatedApp != null && updatedApp.todayUsageMinutes >= updatedApp.dailyLimitMinutes) {
-                    blockedPackages.add(pkg)
-                    showBlockingOverlay(pkg)
+                    val last = lastBlockedAt[pkg] ?: 0L
+                    if (currentTime - last >= BLOCK_COOLDOWN_MS) {
+                        lastBlockedAt[pkg] = currentTime
+                        showBlockingOverlay(pkg)
+                    }
                 }
             }
         }
     }
 
     private fun showBlockingOverlay(packageName: String) {
+        // First push the blocked app to the background by going HOME. This
+        // actually stops the app from staying in the foreground — launching the
+        // overlay alone is not enough, because the user could swipe back to it.
+        val homeIntent = Intent(Intent.ACTION_MAIN).apply {
+            addCategory(Intent.CATEGORY_HOME)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+        startActivity(homeIntent)
+
+        // Then show the full-screen blocking message on top of the home screen.
         val intent = Intent(this, BlockingActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                     Intent.FLAG_ACTIVITY_CLEAR_TOP or
@@ -184,9 +206,10 @@ class MonitoringService : Service() {
         }
     }
 
-    // Call this when secret extra time is granted — remove from blocked set so overlay stops firing
+    // Call this when secret extra time is granted — clear the cooldown so the
+    // overlay stops firing immediately for the now-extended package.
     fun unblockPackage(packageName: String) {
-        blockedPackages.remove(packageName)
+        lastBlockedAt.remove(packageName)
     }
 
     private fun createNotificationChannel() {
@@ -223,6 +246,8 @@ class MonitoringService : Service() {
         private const val CHANNEL_ID = "monitoring_channel"
         private const val NOTIFICATION_ID = 1001
         private const val POLL_INTERVAL_MS = 3000L
+        // Don't re-launch the overlay more than once per this window per app.
+        private const val BLOCK_COOLDOWN_MS = 5000L
         private const val REQUEST_CODE_HEARTBEAT = 2001
         private const val REQUEST_CODE_MIDNIGHT = 2002
         const val ACTION_MIDNIGHT_RESET = "com.dubey.timelimiter.ACTION_MIDNIGHT_RESET"

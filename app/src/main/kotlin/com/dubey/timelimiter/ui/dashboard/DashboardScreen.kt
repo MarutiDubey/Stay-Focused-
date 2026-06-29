@@ -1,7 +1,5 @@
 package com.dubey.timelimiter.ui.dashboard
 
-import android.content.Intent
-import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -22,15 +20,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import com.dubey.timelimiter.data.entity.MonitoredApp
-import com.dubey.timelimiter.ui.selector.AppSelectorActivity
-import com.dubey.timelimiter.ui.settings.GlobalSettingsActivity
-import com.dubey.timelimiter.ui.settings.AppSettingsActivity
-import kotlinx.coroutines.flow.Flow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     apps: List<MonitoredApp>,
+    permissionsMissing: Boolean,
+    hasUsageAccess: Boolean,
+    hasOverlay: Boolean,
+    onFixUsageAccess: () -> Unit,
+    onFixOverlay: () -> Unit,
     onAddApp: () -> Unit,
     onSettings: () -> Unit,
     onEditApp: (MonitoredApp) -> Unit
@@ -55,29 +54,92 @@ fun DashboardScreen(
             }
         }
     ) { padding ->
-        if (apps.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("कोई ऐप नहीं", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("+ बटन दबाएं ऐप जोड़ने के लिए")
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            // Permission warning — blocking does nothing without these, so make
+            // it loud and give the user one-tap access to grant them.
+            if (permissionsMissing) {
+                PermissionWarningCard(
+                    hasUsageAccess = hasUsageAccess,
+                    hasOverlay = hasOverlay,
+                    onFixUsageAccess = onFixUsageAccess,
+                    onFixOverlay = onFixOverlay
+                )
+            }
+
+            if (apps.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("कोई ऐप नहीं", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("+ बटन दबाएं ऐप जोड़ने के लिए")
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(apps) { app ->
+                        AppUsageCard(app, pm, onClick = { onEditApp(app) })
+                    }
                 }
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(apps) { app ->
-                    AppUsageCard(app, pm, onClick = { onEditApp(app) })
+        }
+    }
+}
+
+@Composable
+fun PermissionWarningCard(
+    hasUsageAccess: Boolean,
+    hasOverlay: Boolean,
+    onFixUsageAccess: () -> Unit,
+    onFixOverlay: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                "⚠️ अनुमतियाँ आवश्यक हैं",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                "इनके बिना ऐप ब्लॉक नहीं होंगी।",
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            if (!hasUsageAccess) {
+                Button(
+                    onClick = onFixUsageAccess,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Usage Access चालू करें")
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            if (!hasOverlay) {
+                Button(
+                    onClick = onFixOverlay,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Display Over Apps चालू करें")
                 }
             }
         }

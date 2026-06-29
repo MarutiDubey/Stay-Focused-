@@ -1,6 +1,5 @@
 package com.dubey.timelimiter.ui.selector
 
-import android.content.pm.ApplicationInfo
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -45,18 +44,30 @@ class AppSelectorActivity : ComponentActivity() {
 
             LaunchedEffect(Unit) {
                 withContext(Dispatchers.IO) {
-                    // Load installed user apps
+                    // Load every app that has a launcher icon. This includes
+                    // pre-installed system apps like YouTube (which the old
+                    // FLAG_SYSTEM filter wrongly excluded), while still hiding
+                    // background/internal services that the user can't open.
                     val pm = packageManager
-                    val installedApps = pm.getInstalledApplications(0)
-                        .filter { it.flags and ApplicationInfo.FLAG_SYSTEM == 0 }
-                        .filter { it.packageName != packageName }
-                        .map {
-                            AppInfo(
-                                packageName = it.packageName,
-                                appName = pm.getApplicationLabel(it).toString()
-                            )
+                    val launcherIntent = android.content.Intent(android.content.Intent.ACTION_MAIN).apply {
+                        addCategory(android.content.Intent.CATEGORY_LAUNCHER)
+                    }
+                    val installedApps = pm.queryIntentActivities(launcherIntent, 0)
+                        .map { it.activityInfo.packageName }
+                        .distinct()
+                        .filter { it != packageName }
+                        .mapNotNull { pkg ->
+                            try {
+                                val info = pm.getApplicationInfo(pkg, 0)
+                                AppInfo(
+                                    packageName = pkg,
+                                    appName = pm.getApplicationLabel(info).toString()
+                                )
+                            } catch (e: Exception) {
+                                null
+                            }
                         }
-                        .sortedBy { it.appName }
+                        .sortedBy { it.appName.lowercase() }
 
                     // Use .first() to get a one-shot snapshot from Flow (not blocking loop)
                     val existingMonitored = db.monitoredAppDao().getAllApps().first()
