@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@drawable/blocking_gradient"
+    android:padding="32dp">
+
+    <!-- App name — shown above the main message -->
+    <TextView
+        android:id="@+id/blocked_app_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="ऐप समय समाप्त"
+        android:textSize="18sp"
+        android:textStyle="normal"
+        android:textColor="#FFCC80"
+        android:gravity="center"
+        android:layout_marginBottom="24dp"
+        android:letterSpacing="0.1" />
+
+    <!-- Main blocking message — tap zone for secret extra time -->
+    <TextView
+        android:id="@+id/blocking_message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/default_blocking_message"
+        android:textSize="30sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:gravity="center"
+        android:lineSpacingExtra="10dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="16dp" />
+
+    <!-- Secret hint — barely visible -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="●  ●  ●"
+        android:textSize="12sp"
+        android:textColor="#40FFFFFF"
+        android:gravity="center"
+        android:layout_marginTop="24dp" />
+
+    <!-- Close button -->
+    <Button
+        android:id="@+id/close_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/close_button"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#CC000000"
+        android:layout_marginTop="48dp"
+        android:paddingHorizontal="48dp"
+        android:paddingVertical="16dp"
+        android:cornerRadius="32dp" />
+
+</LinearLayout>

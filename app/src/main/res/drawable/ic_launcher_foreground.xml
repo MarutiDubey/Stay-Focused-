@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Shield icon for Dubey app -->
+    <path
+        android:fillColor="#E040FB"
+        android:pathData="M54,12 L84,26 L84,54 C84,70 72,83 54,90 C36,83 24,70 24,54 L24,26 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M44,52 L50,58 L66,42"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <!-- D letter -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M46,43 L52,43 C57,43 60,46 60,54 C60,62 57,65 52,65 L46,65 Z M49,46 L49,62 L52,62 C55,62 57,60 57,54 C57,48 55,46 52,46 Z" />
+</vector>

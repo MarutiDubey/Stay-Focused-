@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Dubey</string>
+    <string name="notification_channel_name">समय निगरानी</string>
+    <string name="notification_channel_desc">यह सर्विस ऐप उपयोग को ट्रैक करती है</string>
+    <string name="notification_title">Dubey सक्रिय है</string>
+    <string name="notification_text">समय निगरानी चल रही है</string>
+    <string name="default_blocking_message">आज का समय समाप्त हो गया है।\n\nकृपया मोबाइल का उपयोग बंद करें।</string>
+    <string name="close_button">बंद करें</string>
+</resources>
