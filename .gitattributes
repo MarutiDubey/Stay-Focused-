@@ -1,0 +1,5 @@
+# Force LF on shell scripts so they run on Linux CI regardless of host OS
+gradlew text eol=lf
+*.sh text eol=lf
+# Windows batch stays CRLF
+*.bat text eol=crlf
